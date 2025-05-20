@@ -192,6 +192,7 @@
       <button onclick="mostrarSeccion('obtener-certificacion')">Obtener certificación</button>
       <button onclick="mostrarSeccion('recursos')">Recursos</button>
       <button onclick="mostrarSeccion('panel')">Panel</button>
+      <button onclick="mostrarSeccion('track')">Avances</button>
       <button onclick="mostrarSeccion('perfil')">Perfil</button>
       
       
@@ -695,11 +696,123 @@
       <h3>Cursos Completados</h3>
       <div id="cursosCompletados"></div>
     </div>
-    <div class="progreso">
+    <div class="progreso" id="progresoPanel">
       <h3>Racha de Aprendizaje</h3>
       <p>Llevas 5 días seguidos aprendiendo. ¡Sigue así!</p>
     </div>
   </section>
+  <section id="track" style="display: none;padding: 20px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 20px; width: 90%; max-width: 800px; margin-left: auto; margin-right: auto;">
+  <h2 style="color: #3b82f6; font-size: 24px; margin-bottom: 16px;">Metas del Maestro</h2>
+
+  <div style="margin-bottom: 20px;">
+    <label for="goalInput" style="display: block; margin-bottom: 8px; font-weight: bold;">Agregar nueva meta (máx. 3):</label>
+    <input type="text" id="goalInput" placeholder="Escribe tu meta mensual" style="padding: 8px; width: 70%; border-radius: 8px; border: 1px solid #ccc;">
+    <button onclick="addGoal()" style="padding: 8px 16px; background-color: #4f46e5; color: white; border: none; border-radius: 8px; margin-left: 8px;">Agregar</button>
+  </div>
+
+  <div id="goalList"></div>
+</section>
+
+<script>
+  let goals = JSON.parse(localStorage.getItem("teacherGoals") || "[]");
+
+  function renderGoals() {
+    const container = document.getElementById("goalList");
+    container.innerHTML = "";
+
+    goals.forEach((goal, index) => {
+      const progress = Math.round((goal.progress / 7) * 100); // Suponemos 7 días
+
+      const goalItem = document.createElement("div");
+      goalItem.style = "background-color: #e0f2f1; padding: 16px; border-radius: 10px; margin-bottom: 12px;";
+
+      goalItem.innerHTML = `
+        <strong style="font-size: 18px;">${goal.text}</strong>
+        <div style="margin-top: 8px; margin-bottom: 8px;">
+          Progreso: ${goal.progress} de 7 días
+          <div style="height: 16px; background-color: #cbd5e1; border-radius: 8px; overflow: hidden; margin-top: 4px;">
+            <div style="width: ${progress}%; background-color: #4f46e5; height: 100%; transition: width 0.3s;"></div>
+          </div>
+        </div>
+        <button onclick="increaseProgress(${index})" style="margin-right: 8px; background-color: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 6px;">+1 día</button>
+        <button onclick="resetProgress(${index})" style="background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px;">Reiniciar</button>
+      `;
+      container.appendChild(goalItem);
+    });
+  }
+
+  function addGoal() {
+    const input = document.getElementById("goalInput");
+    const text = input.value.trim();
+
+    if (text === "") {
+      alert("Por favor escribe una meta.");
+      return;
+    }
+
+    if (goals.length >= 3) {
+      alert("Solo puedes tener 3 metas activas.");
+      return;
+    }
+
+    goals.push({ text, progress: 0 });
+    localStorage.setItem("teacherGoals", JSON.stringify(goals));
+    input.value = "";
+    renderGoals();
+  }
+
+  function increaseProgress(index) {
+  if (goals[index].progress < 7) {
+    goals[index].progress++;
+    if (goals[index].progress === 7) {
+      awardBadge(goals[index].text);
+    }
+    localStorage.setItem("teacherGoals", JSON.stringify(goals));
+    renderGoals();
+  }
+}
+
+
+  function resetProgress(index) {
+    goals[index].progress = 0;
+    localStorage.setItem("teacherGoals", JSON.stringify(goals));
+    renderGoals();
+  }
+  function awardBadge(goalText) {
+  const badges = JSON.parse(localStorage.getItem("badges") || "[]");
+
+  if (!badges.includes(goalText)) {
+    badges.push(goalText);
+    localStorage.setItem("badges", JSON.stringify(badges));
+  }
+
+  renderBadges();
+}
+
+function renderBadges() {
+  const container = document.getElementById("progresoPanel");
+  const badges = JSON.parse(localStorage.getItem("badges") || "[]");
+
+  // Elimina insignias previas
+  const oldBadges = container.querySelectorAll(".badge");
+  oldBadges.forEach(el => el.remove());
+
+  badges.forEach(badge => {
+    const badgeElement = document.createElement("p");
+    badgeElement.className = "badge";
+    badgeElement.style = "margin-top: 6px; background-color: #fef3c7; color: #92400e; padding: 6px 12px; border-radius: 8px; display: inline-block;";
+    badgeElement.innerHTML = `🏅 Insignia de "${badge}"<br>`;
+
+    container.appendChild(badgeElement);
+  });
+}
+
+
+  renderGoals(); 
+  renderBadges();
+
+</script>
+
   <section style="display: none;"id="perfil"> 
     <style>
         #crearPerfilContainer, #mostrarPerfilContainer {
